@@ -69,6 +69,12 @@ void queryDNS(void) {
   }
   Serial.println();
 
+  uint8_t dnsRequest_part_3[] = {
+    0x00, // Null terminator
+    0x00, 0x10, // Type: TXT (Host Address)
+    0x00, 0x01 // Class: IN (Internet)
+  };
+  
   // Send DNS request
   Serial.print("Querying DNS");
   udp.beginPacket(dnsServer, 53);
