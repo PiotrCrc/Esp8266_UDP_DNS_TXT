@@ -31,9 +31,7 @@ void loop() {
   delay(3000);
 }
 
-void queryDNS(void) {
-  Serial.print("Querying DNS");
-  
+void queryDNS(void) { 
   uint16_t id = random(0, 65535);
   uint8_t dnsRequest_part_1[] = {
     0x00, 0x01, // Transaction ID
@@ -59,18 +57,20 @@ void queryDNS(void) {
   }
   dnsRequest_part_2[i_with_length] = letter_counter;
 
-  Serial.println("request address formated :");
+  Serial.print("request address formated : ");
   for (int i = 0; i < sizeof(dnsRequest_part_2); i++) {
-  Serial.print(dnsRequest_part_2[i]);
+    if (dnsRequest_part_2[i] < 30) {
+      Serial.print(" 0x");
+      Serial.print(dnsRequest_part_2[i], HEX);
+      Serial.print(' ');
+    } else {
+      Serial.print(char(dnsRequest_part_2[i]));
+    }
   }
   Serial.println();
-  uint8_t dnsRequest_part_3[] = {
-    0x00, // Null terminator
-    0x00, 0x10, // Type: TXT (Host Address)
-    0x00, 0x01 // Class: IN (Internet)
-  };
 
   // Send DNS request
+  Serial.print("Querying DNS");
   udp.beginPacket(dnsServer, 53);
   udp.write(dnsRequest_part_1, sizeof(dnsRequest_part_1));
   udp.write(dnsRequest_part_2, sizeof(dnsRequest_part_2));
