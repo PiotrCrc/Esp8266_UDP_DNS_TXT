@@ -8,6 +8,8 @@ unsigned int localUdpPort = 5000;
 
 char packetBuffer[255];
 
+String myAddress = "www.example.com";
+
 WiFiUDP udp;
 
 void setup() {
@@ -33,17 +35,36 @@ void queryDNS(void) {
   Serial.print("Querying DNS");
   
   uint16_t id = random(0, 65535);
-  uint8_t dnsRequest[] = {
+  uint8_t dnsRequest_part_1[] = {
     0x00, 0x01, // Transaction ID
     0x01, 0x00, // Flags: Standard Query
     0x00, 0x01, // Questions: 1
     0x00, 0x00, // Answers: 0
     0x00, 0x00, // Authority PRs: 0
     0x00, 0x00, // Additional PRs: 0
-    // Query
-    0x03, 'w', 'w', 'w', 
-    0x07, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 
-    0x03, 'c', 'o', 'm',
+  };
+
+  uint8_t dnsRequest_part_2[myAddress.length()+1];
+  int i_with_length = 0;
+  int letter_counter = 0;
+  for(int i = 0; i < myAddress.length(); i++) {
+    if (myAddress[i] == '.') {
+      dnsRequest_part_2[i_with_length] = letter_counter;
+      i_with_length = i+1;
+      letter_counter = 0;
+    } else {
+      dnsRequest_part_2[i+1] = myAddress[i];
+      letter_counter++;
+    }
+  }
+  dnsRequest_part_2[i_with_length] = letter_counter;
+
+  Serial.println("request address formated :");
+  for (int i = 0; i < sizeof(dnsRequest_part_2); i++) {
+  Serial.print(dnsRequest_part_2[i]);
+  }
+  Serial.println();
+  uint8_t dnsRequest_part_3[] = {
     0x00, // Null terminator
     0x00, 0x10, // Type: TXT (Host Address)
     0x00, 0x01 // Class: IN (Internet)
@@ -51,7 +72,9 @@ void queryDNS(void) {
 
   // Send DNS request
   udp.beginPacket(dnsServer, 53);
-  udp.write(dnsRequest, sizeof(dnsRequest));
+  udp.write(dnsRequest_part_1, sizeof(dnsRequest_part_1));
+  udp.write(dnsRequest_part_2, sizeof(dnsRequest_part_2));
+  udp.write(dnsRequest_part_3, sizeof(dnsRequest_part_3));
   udp.endPacket();
 
   delay(500);
